@@ -1,7 +1,7 @@
 ---
 name: writers-room-v1
 description: Turns a raw, vague story idea into a locked, production-grade Initial Concept (Title TBD, 30-50 word logline, 6-paragraph 3-act synopsis) by simulating a seven-writer room with up to 15 epochs of self-correction. Use whenever a user shares a seed idea, premise, aesthetic, or genre mashup and wants a logline, synopsis, pitch, or story concept developed for a film, pilot, limited series, short, or vertical drama.
-version: 1.0.0
+version: 1.1.0
 ---
 
 # WRITER'S ROOM v1
@@ -17,7 +17,7 @@ Detect what the current platform can do, then follow the matching column. Never 
 | Capability | If available | If not |
 |---|---|---|
 | **Web search / fetch** | Use it for every IMDb reference lookup. | Use memory, tag each title `[UNVERIFIED]`, and ask the user to sanity-check titles and years at the Reference Lock. |
-| **File creation** | Write the deliverable as `.md` (and `.docx` if asked; use a docx skill if present). | Output the deliverable in one clean fenced block, ready to copy. |
+| **File creation + document skills** | Final export is ALWAYS routed through the platform's DOCX and PDF skills (Section 10.1): load and follow them rather than hand-rolling files. | Fall back per Section 10.2, ending with one clean fenced block, ready to copy. |
 | **Private reasoning / hidden scratchpad** | Run the epoch simulation there. | Write the epoch log in a fenced block labelled `ROOM LOG (skip to deliverable)` BEFORE the deliverable, in compact form (max 40 words per judge per epoch). |
 | **Asking questions** | Ask in chat. | Same. |
 
@@ -283,7 +283,7 @@ Apply during the Beat Spine and every epoch.
 
 ## 10. PHASE III: DELIVERABLE AND HANDOFF
 
-Export using the platform's file tool (see Section 1). Exact layout (plain text):
+Exact layout (plain text):
 
 ```
 [PROJECT TITLE]
@@ -296,7 +296,26 @@ Plot Synopsis
 [Six paragraphs. Left-aligned. No indentation. Blank line between paragraphs. Seamless narrative flow.]
 ```
 
-The title is **always TBD**. Filename: `initial-concept_<two-word-logline-keyword>.md`.
+The title is **always TBD**. Base filename: `initial-concept_<two-word-logline-keyword>`.
+
+### 10.1 Export via the DOCX and PDF skills (mandatory, any LLM)
+
+The final result is delivered as **both a `.docx` and a `.pdf`** unless the user asks for only one. Do not hand-build these files when a skill exists.
+
+1. **Write the source.** Save the layout above as `<base>.md`. This is the single source of truth for both exports, so the two files can never differ.
+2. **DOCX.** Invoke the platform's DOCX skill (Claude: load the `docx` skill with the Skill tool and read its SKILL.md before building; Gemini or other agents: the equivalent docx skill, extension, or tool). Build `<base>.docx` from the source.
+3. **PDF.** Invoke the platform's PDF skill (Claude: the `pdf` skill; Gemini or others: the equivalent). Build `<base>.pdf` from the same source, or convert the finished DOCX if the PDF skill recommends that.
+4. **Formatting for both files:** US Letter or A4 (match the user's locale), 1-inch margins, one clean readable serif or sans body font at 11-12pt, 1.15 line spacing. The title line reads `TBD` as a centered title. "Logline" and "Plot Synopsis" are simple headings. Synopsis paragraphs are left-aligned, no first-line indent, with spacing between paragraphs. No headers, footers, page numbers, watermarks, tables, or reference titles.
+5. **Verify before sending.** Reopen each file and confirm: the title is TBD, the logline is 30-50 words, exactly 6 synopsis paragraphs, 600-1200 words, and no brackets or meta-commentary. Fix and rebuild on any failure.
+6. **Deliver** both files (Claude: SendUserFile or the platform's equivalent), plus the `.md` only if the user wants the plain-text source.
+
+### 10.2 Fallback ladder (when a skill is missing)
+
+Go down one rung only when the rung above is unavailable. Say in one line which rung you used.
+1. DOCX and PDF skills (preferred).
+2. Native code tools: `python-docx` or `docx` (Node) for DOCX; convert to PDF with LibreOffice (`soffice --headless --convert-to pdf`), or build with `reportlab`.
+3. Markdown file only, with a note that DOCX/PDF could not be generated here and how to convert it (for example, pandoc).
+4. No file tools at all: one clean fenced block of the layout, ready to paste into Word or Docs and save as PDF.
 
 **After delivery, in chat (not in the file), add "Showrunner's Notes" (max 6 lines):**
 - Core status (preserved, and any flexible elements that bent).
@@ -321,6 +340,7 @@ Offer these commands. Each re-runs a mini-epoch on the affected paragraphs only,
 - **Dark themes:** handle at the synopsis level, within the platform's safety rules.
 - **Search unavailable or IMDb blocked:** follow the Section 1 fallback and tag `[UNVERIFIED]`.
 - **Lost context:** reprint Room State before continuing.
+- **Punch-up re-exports:** after any Punch-up Menu change, regenerate both the `.docx` and `.pdf` through the same Section 10.1 flow so the files never go stale.
 
 ---
 
@@ -341,5 +361,5 @@ Allowed only when deliberately subverted with a reason inside the story.
 4. Four loglines (30-50 words each).
 5. User approves a logline. Print Room State.
 6. Beat Spine, Weaver draft, N epochs (Lock-and-Patch, focus bands, convergence rule).
-7. Showrunner Gate, clean synopsis, export file.
+7. Showrunner Gate, clean synopsis, export `.docx` + `.pdf` via the DOCX and PDF skills (Section 10).
 8. Showrunner's Notes, Punch-up Menu.
